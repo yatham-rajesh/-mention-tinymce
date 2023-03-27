@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <script
+      src="tinymce/js/tinymce/tinymce.min.js"
+      referrerpolicy="origin"
+    ></script>
+    <script>
+      var specialChars = [
+        { text: "Rajesh Yatham", value: "@rajesh" },
+        { text: "Vamshi", value: "@Vamshi" },
+        { text: "hash", value: "#" },
+        { text: "dollars", value: "$" },
+        { text: "percent sign", value: "%" },
+        { text: "caret", value: "^" },
+        { text: "ampersand", value: "&" },
+        { text: "asterisk", value: "*" },
+      ];
+      tinymce.init({
+        selector: "#mytextarea",
+        height: 250,
+        setup: (editor) => {
+          const onAction = (autocompleteApi, rng, value) => {
+            editor.selection.setRng(rng);
+            editor.insertContent(value);
+            autocompleteApi.hide();
+          };
+
+          const getMatchedChars = (pattern) => {
+            return specialChars
+              .filter((char) => char.text.indexOf(pattern) !== -1)
+              .map((char) => {
+                return {
+                  ...char,
+                  html: `<a href="${char.href}">${char.value}</a>`,
+                };
+              });
+          };
+
+          /**
+           * An autocompleter that allows you to insert special characters.
+           * Items are built using the CardMenuItem.
+           */
+          editor.ui.registry.addAutocompleter("specialchars_cardmenuitems", {
+            ch: "@",
+            minChars: 1,
+            columns: 1,
+            highlightOn: ["char_name"],
+            onAction: onAction,
+            fetch: (pattern) => {
+              return new Promise((resolve) => {
+                const results = getMatchedChars(pattern).map((char) => ({
+                  type: "cardmenuitem",
+                  value: char.html,
+                  label: char.text, 
+                  items: [
+                    {
+                      type: "cardcontainer",
+                      direction: "vertical",
+                      items: [
+                        {
+                          type: "cardtext",
+                          text: char.value,
+                          name: "char_name",
+                        },
+                        {
+                          type: "cardtext",
+                          text: char.value,
+                        },
+                      ],
+                    },
+                  ],
+                }));
+                resolve(results);
+              });
+            },
+          });
+        },
+      });
+    </script>
+  </head>
+
+  <body>
+    <h1>TinyMCE Quick Start Guide</h1>
+    <form method="post">
+      <textarea id="mytextarea">Hello, World!</textarea>
+    </form>
+  </body>
+</html>
